@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.abs
 
 class MainActivity : ComponentActivity() {
     private var calculationResult by mutableStateOf("Calculation results will be shown here")
@@ -39,10 +40,40 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun calculate() {
-        // TODO implement business logic
-        val hpValue = inputs["Hp"]?.toDoubleOrNull() ?: 0.0
-        val cpValue = inputs["Cp"]?.toDoubleOrNull() ?: 0.0
-        calculationResult = "Result: ${hpValue + cpValue}"
+        val delta = 0.01
+
+        val numberInputs = HashMap<String, Double>()
+        var inputSum = .0
+        inputs.forEach { (key, value) ->
+            val numberInput = value.toDoubleOrNull() ?: .0
+            numberInputs[key] = numberInput
+            inputSum += numberInput
+        }
+        if (abs(inputSum - 100) > delta) {
+            calculationResult = "Sum of inputs should be equal to 100%"
+            return
+        }
+
+        val outputs = HashMap<String, Double>()
+        outputs["Kpc"] = 100/(100 - numberInputs["Wp"]!!)
+        outputs["Kрг"] = 100/(100 - numberInputs["Wp"]!! - numberInputs["Ap"]!!)
+
+        var outputSum = .0
+        listOf("H", "C", "S", "N", "O", "A").forEach { elem ->
+            val elemP = numberInputs[elem + "p"]!! * outputs["Kpc"]!!
+            outputs[elem + "c"] = elemP
+            outputSum += elemP
+        }
+        if(abs(outputSum - 100) > delta) {
+            calculationResult = "Calculation error\nSum of outputs should be equal to 100%"
+            return
+        }
+
+        val calculationResultBuilder = StringBuilder()
+        outputs.forEach { (key, value) ->
+            calculationResultBuilder.append("%s: %.3f%%\n".format(key, value))
+        }
+        calculationResult = calculationResultBuilder.toString()
     }
 }
 
