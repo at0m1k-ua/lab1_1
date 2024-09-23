@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.sp
 import kotlin.math.abs
 
 class MainActivity : ComponentActivity() {
-    private var calculationResult by mutableStateOf("Calculation results will be shown here")
+    private var calculationResult by mutableStateOf("Показники ще не обчислено")
 
     private var inputs by mutableStateOf(mapOf<String, String>())
 
@@ -42,38 +42,53 @@ class MainActivity : ComponentActivity() {
     private fun calculate() {
         val delta = 0.01
 
-        val numberInputs = HashMap<String, Double>()
-        var inputSum = .0
-        inputs.forEach { (key, value) ->
-            val numberInput = value.toDoubleOrNull() ?: .0
-            numberInputs[key] = numberInput
-            inputSum += numberInput
-        }
-        if (abs(inputSum - 100) > delta) {
-            calculationResult = "Sum of inputs should be equal to 100%"
+        val hp = inputs["Hp"]?.toDoubleOrNull() ?: .0
+        val cp = inputs["Cp"]?.toDoubleOrNull() ?: .0
+        val sp = inputs["Sp"]?.toDoubleOrNull() ?: .0
+        val np = inputs["Np"]?.toDoubleOrNull() ?: .0
+        val op = inputs["Op"]?.toDoubleOrNull() ?: .0
+        val wp = inputs["Wp"]?.toDoubleOrNull() ?: .0
+        val ap = inputs["Ap"]?.toDoubleOrNull() ?: .0
+        if(abs(hp + cp + sp + np + op + wp + ap - 100) > delta) {
+            calculationResult = "Помилка введення\nСума введених значень повинна дорівнювати 100"
             return
         }
 
-        val outputs = HashMap<String, Double>()
-        outputs["Kpc"] = 100/(100 - numberInputs["Wp"]!!)
-        outputs["Kрг"] = 100/(100 - numberInputs["Wp"]!! - numberInputs["Ap"]!!)
-
-        var outputSum = .0
-        listOf("H", "C", "S", "N", "O", "A").forEach { elem ->
-            val elemP = numberInputs[elem + "p"]!! * outputs["Kpc"]!!
-            outputs[elem + "c"] = elemP
-            outputSum += elemP
-        }
-        if(abs(outputSum - 100) > delta) {
-            calculationResult = "Calculation error\nSum of outputs should be equal to 100%"
-            return
-        }
-
-        val calculationResultBuilder = StringBuilder()
-        outputs.forEach { (key, value) ->
-            calculationResultBuilder.append("%s: %.3f%%\n".format(key, value))
-        }
-        calculationResult = calculationResultBuilder.toString()
+        val kpc = 100/(100 - wp)
+        val kpg = 100/(100 - wp - ap)
+        val hc = hp*kpc
+        val cc = cp*kpc
+        val sc = sp*kpc
+        val nc = np*kpc
+        val oc = op*kpc
+        val ac = ap*kpc
+        val hg = hp*kpg
+        val cg = cp*kpg
+        val sg = sp*kpg
+        val ng = np*kpg
+        val og = op*kpg
+        val qrn = 339*cp + 1030*hp - 108.8*(op - sp) - 25*wp
+        val qsn = (qrn + 25*wp)*100/(100 - wp)
+        val qgn = (qrn + 25*wp)*100/(100 - wp - ap)
+        calculationResult =
+            """
+                Qрс = %.2f, Qрг = %.2f
+                Hc = %.2f%%, Cc = %.2f%%
+                Sc = %.2f%%, Nc = %.2f%%
+                Oc = %.2f%%, Ac = %.2f%%
+                Hг = %.2f%%, Cг = %.2f%%
+                Sг = %.2f%%, Nг = %.2f%%
+                Oг = %.2f%%
+                Qрн = %.2f КДж/кг
+                Qсн = %.2f КДж/кг
+                Qгн = %.2f КДж/кг
+            """.trimIndent()
+                .format(
+                    kpc, kpg,
+                    hc, cc, sc, nc, oc, ac,
+                    hg, cg, sg, ng, og,
+                    qrn, qsn, qgn
+                )
     }
 }
 
